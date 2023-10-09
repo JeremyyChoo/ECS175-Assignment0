@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assignment 0 Solution</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div id="app">
+        <div id="header-container">
+            <h1>Assignment 0 Solution</h1>
+            <h2>A Simple WebGL Application | <a
+                    href="https://canvas.ucdavis.edu/courses/812691/assignments/1062532">Instructions</a></h2>
+        </div>
+        <div class="settings-container">
+            <div class="setting">
+                <h3>Canvas</h3>
+                <div class="setting-item-container">
+                    <div id="clearCanvas" class="setting-item inactive">[X] Clear Canvas</div>
+                </div>
+            </div>
+        </div>
+        <div id="canvas-container">
+            <canvas id="canvas" width="1000" height="600"></canvas>
+        </div>
+    </div>
+    
+    <noscript>You need to enable JavaScript to view the full site.</noscript>
+    <script type="module">
+        import { WebGlApp, Triangle } from './js/main.js'
+        const canvas = document.getElementById('canvas')
+        const clearCanvas = document.getElementById('clearCanvas')
+        const newWebGLApp = new WebGlApp()
+        const gl = newWebGLApp.initGl()
+        
+        const vertexShaderSource = `
+            attribute vec2 a_position;
+            uniform mat4 u_proj;
+            attribute vec3 u_color;
+            varying vec3 v_color;
+        
+            void main(void) {
+                gl_Position = u_proj * vec4(a_position, 0, 1.0);
+                gl_PointSize = 5.0;
+                v_color = u_color;
+            } 
+        `
+
+        const fragmentShaderSource = `
+            precision mediump float;
+            varying vec3 v_color;
+    
+            void main() {
+             gl_FragColor = vec4(v_color, 1.0);
+            }
+        `
+
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+        gl.compileShader(vertexShader);
+        gl.compileShader(fragmentShader);
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+
+        gl.useProgram(program);
+
+        function createProjMat (left, right, top, bottom) {
+            return [
+                2 / (right - left), 0, 0, 0,
+                0, 2 / (top - bottom), 0, 0,
+                0, 0, 1, 0,
+                -(right + left) / (right - left), -(bottom + top)/(top - bottom), 0, 1
+            ]
+        }
+    
+        const projMat = createProjMat(0, gl.canvas.width, 0, gl.canvas.height);
+        const uProj = gl.getUniformLocation(program, 'u_proj');
+        gl.uniformMatrix4fv(uProj, false, projMat);
+
+        canvas.addEventListener('click', getMousePos)
+
+        clearCanvas.addEventListener('click', handleClearCanvas)
+
+        document.onkeypress=function(e){    
+            var keyNum=window.event ? e.keyCode :e.which; 
+            if(keyNum===88 || keyNum === 120){  
+                handleClearCanvas()
+            }  
+        }
+
+        function getMousePos(e) {
+            let x = e.offsetX
+            let y = e.offsetY
+            // console.log();
+            let array = [x, y-50, 0, x-30, y+40, 0, x+30, y+40, 0]
+            // pointArr.push(x, y-50, x-30, y+40, x+30, y+40);
+            // pointColorArr.push(1, 1, 0, 1, 1, 0, 1, 1,0);
+            newWebGLApp.addTriangle(gl, program, array, 10)
+            newWebGLApp.render(gl,gl.canvas.width, gl.canvas.height)
+        }
+
+        function handleClearCanvas() {
+            newWebGLApp.clearCanvas(gl)
+            newWebGLApp.clearShapes()
+            newWebGLApp.render(gl,gl.canvas.width, gl.canvas.height)
+        }
+
+    </script>
+</body>
+</html> 
+
